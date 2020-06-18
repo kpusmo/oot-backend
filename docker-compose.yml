@@ -1,0 +1,25 @@
+version: '3.5'
+services:
+  oot-back:
+    build: .
+    working_dir: /opt/app
+    environment:
+      - RUST_BACKTRACE=1
+    volumes:
+      - ./:/opt/app
+      - /opt/app/target
+    command:  ["systemfd", "--no-pid", "-s", "http::0.0.0.0:80", "--", "cargo", "watch", "-x", "run"]
+    restart: always
+    ports:
+      - 3001:80
+    networks:
+      - traefik-net
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.docker.network=traefik-net"
+#      - "traefik.port=80"
+#      - "traefik.frontend.rule=Host:oot-back.local.net"
+
+#networks:
+#  traefik-net:
+#    external: true

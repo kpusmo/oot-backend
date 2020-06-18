@@ -1,0 +1,2 @@
+1. macro dodające type do response'ów
+2. wybór answerera tylko po poprawnej odpowiedzi
