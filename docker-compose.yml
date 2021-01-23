@@ -11,15 +11,16 @@ services:
     command:  ["systemfd", "--no-pid", "-s", "http::0.0.0.0:80", "--", "cargo", "watch", "-x", "run"]
     restart: always
     ports:
-      - 3001:80
+      - 3111:80
     networks:
       - traefik-net
-#    labels:
-#      - "traefik.enable=true"
-#      - "traefik.docker.network=traefik-net"
-#      - "traefik.port=80"
-#      - "traefik.frontend.rule=Host:oot-back.local.net"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.docker.network=traefik-net"
+      - "traefik.port=80"
+      - "traefik.frontend.rule=Host:oot-back.local.net"
 
-#networks:
-#  traefik-net:
-#    external: true
+networks:
+  traefik-net:
+    external: true
+    name: traefik-net

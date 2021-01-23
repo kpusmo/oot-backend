@@ -38,7 +38,7 @@ impl GameTick<AnswerTimeout> for Game {
                         }
                     }
                     _ => {
-                        // do nothing for other states - suppose answerer answered question anyway and we did not send signal to thread handling timeout
+                        // do nothing for other states - suppose answerer answered question anyway and we did not send the signal to the thread handling timeout
                         new_answerer_id = None;
                         new_state = "".to_owned();
                     }

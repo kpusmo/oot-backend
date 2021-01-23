@@ -1,6 +1,6 @@
 use std::error::Error;
-use serde::export::Formatter;
 use std::fmt;
+use std::fmt::Formatter;
 
 #[derive(Debug)]
 pub struct WsError {

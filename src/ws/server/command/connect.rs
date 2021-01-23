@@ -6,6 +6,7 @@ use crate::ws::server::GameServer;
 use crate::ws::server::message::ServerMessage;
 use crate::ws::session::message::SessionMessage;
 use actix::dev::{MessageResponse, ResponseChannel};
+use std::collections::HashSet;
 
 /// New session is created
 #[derive(Message)]
@@ -19,14 +20,15 @@ impl Handler<Connect> for GameServer {
     type Result = ConnectResponse;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
-        self.counter += 1;
-        self.sessions.insert(self.counter, Connection {
+        self.session_counter += 1;
+        self.sessions.insert(self.session_counter, Connection {
             addr: msg.addr,
             name: msg.name,
-            id: self.counter,
+            id: self.session_counter,
+            rooms: HashSet::new(),
         });
         ConnectResponse {
-            connected_id: self.counter
+            connected_id: self.session_counter
         }
     }
 }

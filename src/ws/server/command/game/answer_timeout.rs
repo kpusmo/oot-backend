@@ -4,6 +4,8 @@ use crate::ws::server::GameServer;
 use crate::ws::server::game::event::{AnswerTimeout as GameAnswerTimeoutEvent, GameTick, TickResult};
 use crate::ws::server::game::GameState;
 
+/// Command sent from the thread spawn in `AskedQuestion` handler
+/// Sends `GameAnswerTimeoutEvent` to the game and
 #[derive(Message, Debug)]
 #[rtype(result = "()")]
 pub struct AnswerTimeout {

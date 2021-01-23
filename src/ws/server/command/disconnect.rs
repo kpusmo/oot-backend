@@ -29,9 +29,9 @@ impl Handler<Disconnect> for GameServer {
             println!("id {} disconnected", msg.id);
             self.send_message_to(connection.id, &DisconnectResponse {});
             let mut rooms: Vec<String> = vec![];
-            for (name, room) in &mut self.rooms {
+            for (room_name, room) in &mut self.rooms {
                 if room.members.remove(&msg.id) {
-                    rooms.push(name.clone());
+                    rooms.push(room_name.clone());
                 }
             }
             for room in rooms {

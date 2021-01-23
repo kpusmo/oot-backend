@@ -6,7 +6,7 @@ use std::error::Error;
 use crate::ws::error::WsError;
 use crate::ws::session::message::SessionMessage;
 use crate::ws::server::message::ServerMessage;
-use crate::ws::server::command::{Disconnect, ClientMessage, JoinRoom, game, Connect, ConnectResponse};
+use crate::ws::server::command::{Disconnect, ChatMessage, JoinRoom, game, Connect, ConnectResponse};
 use crate::ws::server::GameServer;
 
 
@@ -47,7 +47,7 @@ impl WsSession {
         let chunks: Vec<&str> = encoded_msg.splitn(2, ' ').collect();
         match chunks[0] {
             "message" => {
-                let mut msg = serde_json::from_str::<ClientMessage>(chunks[1])?;
+                let mut msg = serde_json::from_str::<ChatMessage>(chunks[1])?;
                 msg.id = self.id;
                 self.server.do_send(msg);
             },

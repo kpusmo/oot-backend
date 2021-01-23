@@ -3,7 +3,7 @@ use actix::{Handler, Message};
 use crate::ws::session::WsSession;
 use serde_json::Value;
 
-#[derive(Message)]
+#[derive(Message, Clone)]
 #[rtype(result = "()")]
 pub struct SessionMessage {
     pub response: String,
