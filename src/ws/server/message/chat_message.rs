@@ -2,15 +2,14 @@ use actix::{Context, Handler, Message};
 use serde::{Deserialize, Serialize};
 
 use crate::ws::server::GameServer;
-use crate::ws::session::default_id;
 
-/// Send message to specific room
+/// Send message to a specific room
 #[derive(Message, Debug, Deserialize)]
 #[serde(rename_all = "snake_case")]
 #[rtype(result = "()")]
 pub struct ChatMessage {
-    #[serde(default = "default_id")]
-    pub id: usize,
+    #[serde(default)]
+    pub session_id: usize,
     room: String,
     game_id: usize,
     contents: String,
@@ -29,13 +28,13 @@ impl Handler<ChatMessage> for GameServer {
 
     fn handle(&mut self, msg: ChatMessage, _ctx: &mut Context<Self>) -> Self::Result {
         println!("{:?}", msg);
-        if let Some(connection) = self.sessions.get(&msg.id) {
+        if let Some(connection) = self.sessions.get(&msg.session_id) {
             if connection.rooms.contains(&msg.room) {
                 self.send_message(&msg.room, &ChatMessageResponse {
                     sender_id: connection.id,
                     message: &msg.contents,
                     room: &msg.room,
-                }, msg.id);
+                }, msg.session_id);
             }
         }
     }

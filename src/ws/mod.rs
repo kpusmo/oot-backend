@@ -1,6 +1,6 @@
 use std::time::Instant;
 
-use actix_web::{Error, HttpRequest, HttpResponse, web};
+use actix_web::{Error, HttpResponse, web, HttpRequest};
 use actix_web_actors::ws;
 use serde::de::{self, Deserialize, Deserializer, Unexpected};
 
@@ -9,6 +9,7 @@ use crate::ws::session::WsSession;
 
 pub mod server;
 pub mod error;
+mod game;
 mod session;
 
 pub fn routes(cfg: &mut web::ServiceConfig) {
@@ -23,6 +24,7 @@ async fn ws_route(
     stream: web::Payload,
     state: web::Data<State>,
 ) -> Result<HttpResponse, Error> {
+    println!("siema siema o tej porze każden wypić może");
     ws::start(
         WsSession {
             id: 0,

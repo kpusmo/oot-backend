@@ -1,17 +1,24 @@
 use std::error::Error;
 use std::fmt;
 use std::fmt::Formatter;
+use serde::Serialize;
 
-#[derive(Debug)]
+#[derive(Debug, Serialize)]
 pub struct WsError {
     message: String,
 }
 
 impl WsError {
-    pub fn message(message: String) -> Box<Self> {
+    pub fn boxed(message: &str) -> Box<Self> {
         Box::new(WsError {
-            message,
+            message: message.to_owned(),
         })
+    }
+
+    pub fn message(message: &str) -> Self {
+        WsError {
+            message: message.to_owned(),
+        }
     }
 }
 

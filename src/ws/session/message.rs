@@ -21,7 +21,7 @@ impl Handler<SessionMessage> for WsSession {
     type Result = ();
 
     fn handle(&mut self, msg: SessionMessage, ctx: &mut Self::Context) -> Self::Result {
-        let mut v: Value = serde_json::from_str(&msg.response).unwrap();
+        let v: Value = serde_json::from_str(&msg.response).unwrap();
         // v["type"] = Value::String("typ".to_owned());
         // println!("{:?}", v);
         // println!("{}", serde_json::to_string(&v).unwrap());

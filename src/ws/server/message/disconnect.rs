@@ -7,7 +7,7 @@ use crate::ws::server::GameServer;
 #[derive(Message)]
 #[rtype(result = "()")]
 pub struct Disconnect {
-    pub id: usize,
+    pub session_id: usize,
 }
 
 #[derive(Debug, Serialize)]
@@ -25,12 +25,12 @@ impl Handler<Disconnect> for GameServer {
     type Result = ();
 
     fn handle(&mut self, msg: Disconnect, _: &mut Context<Self>) -> Self::Result {
-        if let Some(connection) = self.sessions.remove(&msg.id) {
-            println!("id {} disconnected", msg.id);
+        if let Some(connection) = self.sessions.remove(&msg.session_id) {
+            println!("id {} disconnected", msg.session_id);
             self.send_message_to(connection.id, &DisconnectResponse {});
             let mut rooms: Vec<String> = vec![];
             for (room_name, room) in &mut self.rooms {
-                if room.members.remove(&msg.id) {
+                if room.members.remove(&msg.session_id) {
                     rooms.push(room_name.clone());
                 }
             }
@@ -40,6 +40,7 @@ impl Handler<Disconnect> for GameServer {
                     room: &room,
                 }, 0);
             }
+            // todo handle pending games
         }
     }
 }

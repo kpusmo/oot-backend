@@ -1,14 +1,22 @@
-use actix::*;
+use std::error::Error;
+use std::time::{Duration, Instant};
+
+use actix::{Actor, Addr, ContextFutureSpawner, fut, Running, StreamHandler, WrapFuture, AsyncContext, ActorContext, ActorFuture};
 use actix_web_actors::ws;
 
-use std::time::{Instant, Duration};
-use std::error::Error;
 use crate::ws::error::WsError;
-use crate::ws::session::message::SessionMessage;
-use crate::ws::server::message::ServerMessage;
-use crate::ws::server::command::{Disconnect, ChatMessage, JoinRoom, game, Connect, ConnectResponse};
 use crate::ws::server::GameServer;
-
+use crate::ws::server::message::connect::Connect;
+use crate::ws::server::message::disconnect::Disconnect;
+use crate::ws::server::message::ServerMessage;
+use crate::ws::session::message::SessionMessage;
+use crate::ws::server::message::chat_message::ChatMessage;
+use crate::ws::server::message::join::JoinRoom;
+use crate::ws::server::message::game_message::create_game::CreateGame;
+use crate::ws::server::message::game_message::ask_question::AskQuestion;
+use crate::ws::server::message::game_message::answer::AnswerQuestion;
+use crate::ws::server::message::game_message::validate_answer::ValidateAnswer;
+use crate::ws::server::message::game_message::choose_answerer::ChooseAnswerer;
 
 /// How often heartbeat pings are sent
 const HEARTBEAT_INTERVAL: Duration = Duration::from_secs(5);
@@ -36,7 +44,7 @@ impl WsSession {
             println!("Websocket Client heartbeat failed, disconnecting!");
 
             // notify server
-            act.server.do_send(Disconnect { id: act.id });
+            act.server.do_send(Disconnect { session_id: act.id });
 
             // stop actor
             ctx.stop();
@@ -48,40 +56,40 @@ impl WsSession {
         match chunks[0] {
             "message" => {
                 let mut msg = serde_json::from_str::<ChatMessage>(chunks[1])?;
-                msg.id = self.id;
+                msg.session_id = self.id;
                 self.server.do_send(msg);
             },
             "join" => {
                 let mut msg = serde_json::from_str::<JoinRoom>(chunks[1])?;
-                msg.id = self.id;
+                msg.session_id = self.id;
                 self.server.do_send(msg);
             },
             "create_game" => {
-                let mut msg = serde_json::from_str::<game::CreateGame>(chunks[1])?;
-                msg.id = self.id;
+                let mut msg = serde_json::from_str::<CreateGame>(chunks[1])?;
+                msg.session_id = self.id;
                 self.server.do_send(msg);
             },
             "ask_question" => {
-                let mut msg = serde_json::from_str::<game::AskQuestion>(chunks[1])?;
-                msg.id = self.id;
+                let mut msg = serde_json::from_str::<AskQuestion>(chunks[1])?;
+                msg.session_id = self.id;
                 self.server.do_send(msg);
             },
             "answer" => {
-                let mut msg = serde_json::from_str::<game::Answer>(chunks[1])?;
-                msg.id = self.id;
+                let mut msg = serde_json::from_str::<AnswerQuestion>(chunks[1])?;
+                msg.session_id = self.id;
                 self.server.do_send(msg);
             },
             "validate_answer" => {
-                let mut msg = serde_json::from_str::<game::ValidateAnswer>(chunks[1])?;
-                msg.id = self.id;
+                let mut msg = serde_json::from_str::<ValidateAnswer>(chunks[1])?;
+                msg.session_id = self.id;
                 self.server.do_send(msg);
             },
             "choose_answerer" => {
-                let mut msg = serde_json::from_str::<game::ChooseAnswerer>(chunks[1])?;
-                msg.id = self.id;
+                let mut msg = serde_json::from_str::<ChooseAnswerer>(chunks[1])?;
+                msg.session_id = self.id;
                 self.server.do_send(msg);
             },
-            _ => return Err(WsError::message(format!("communication error - unknown command {}", chunks[0]))),
+            _ => return Err(WsError::boxed(&format!("communication error - unknown command {}", chunks[0]))),
         }
         Ok(())
     }
@@ -96,19 +104,19 @@ impl Actor for WsSession {
         // we'll start heartbeat process on session start.
         self.hb(ctx);
 
-        let addr = ctx.address().recipient();
+        let addr = ctx.address().recipient::<SessionMessage>();
         self.server
             .send(Connect {
                 addr,
                 name: self.name.clone(),
             })
             .into_actor(self)
-            .then(|res: Result<ConnectResponse, MailboxError>, act, ctx| {
+            .then(|res, act, ctx| {
                 match res {
                     Ok(response) => {
                         act.id = response.connected_id;
                         ctx.text(serde_json::to_string(&ServerMessage::success(response)).unwrap());
-                    },
+                    }
                     _ => ctx.stop(),
                 }
                 fut::ready(())
@@ -117,8 +125,8 @@ impl Actor for WsSession {
     }
 
     fn stopping(&mut self, _: &mut Self::Context) -> Running {
-        // notify chat server
-        self.server.do_send(Disconnect { id: self.id });
+        // notify server
+        self.server.do_send(Disconnect { session_id: self.id });
         Running::Stop
     }
 }
@@ -133,7 +141,7 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
             Ok(ws::Message::Ping(msg)) => {
                 self.hb = Instant::now();
                 ctx.pong(&msg);
-            },
+            }
             Ok(ws::Message::Pong(_)) => {
                 self.hb = Instant::now();
             }
@@ -142,13 +150,9 @@ impl StreamHandler<Result<ws::Message, ws::ProtocolError>> for WsSession {
                 if let Err(e) = self.handle_client_message(msg) {
                     ctx.text(format!("error: {}", e));
                 }
-            },
+            }
             Ok(ws::Message::Binary(bin)) => ctx.binary(bin),
             _ => (),
         }
     }
-}
-
-pub fn default_id() -> usize {
-    0
 }

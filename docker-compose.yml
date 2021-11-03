@@ -12,15 +12,15 @@ services:
     restart: always
     ports:
       - 3111:80
-    networks:
-      - traefik-net
-    labels:
-      - "traefik.enable=true"
-      - "traefik.docker.network=traefik-net"
-      - "traefik.port=80"
-      - "traefik.frontend.rule=Host:oot-back.local.net"
-
-networks:
-  traefik-net:
-    external: true
-    name: traefik-net
+#    networks:
+#      - traefik-net
+#    labels:
+#      - "traefik.enable=true"
+#      - "traefik.docker.network=traefik-net"
+#      - "traefik.port=80"
+#      - "traefik.frontend.rule=Host:oot-back.local.net"
+#
+#networks:
+#  traefik-net:
+#    external: true
+#    name: traefik-net

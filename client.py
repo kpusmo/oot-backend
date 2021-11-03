@@ -12,7 +12,9 @@ queue = asyncio.Queue()
 
 
 async def start_client(url, loop):
+    print("coś?")
     ws = await aiohttp.ClientSession().ws_connect(url, autoclose=False, autoping=False)
+    print("cokolwiek?")
     print(ws)
 
     def stdin_callback():
@@ -79,7 +81,9 @@ async def tick():
 
 
 async def main(url, loop):
-    await asyncio.wait([start_client(url, loop), tick()])
+    task1 = loop.create_task(start_client(url, loop))
+    task2 = loop.create_task(tick())
+    await asyncio.wait({task1, task2})
 
 
 ARGS = argparse.ArgumentParser(

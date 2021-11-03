@@ -1,23 +1,24 @@
-use actix::{Context, Handler, Message, Recipient, Actor};
-use serde::Serialize;
-
-use crate::ws::server::connection::Connection;
-use crate::ws::server::GameServer;
-use crate::ws::server::message::ServerMessage;
-use crate::ws::session::message::SessionMessage;
-use actix::dev::{MessageResponse, ResponseChannel};
 use std::collections::HashSet;
 
+use actix::{Actor, Context, Handler, Message, Recipient};
+use actix::dev::{MessageResponse, ResponseChannel};
+use serde::Serialize;
+
+use crate::ws::server::{Connection, GameServer};
+use crate::ws::session::message::SessionMessage;
+
 /// New session is created
-#[derive(Message)]
-#[rtype(result = "ConnectResponse")]
 pub struct Connect {
     pub name: String,
     pub addr: Recipient<SessionMessage>,
 }
 
+impl Message for Connect {
+    type Result = ConnectSessionResponse;
+}
+
 impl Handler<Connect> for GameServer {
-    type Result = ConnectResponse;
+    type Result = ConnectSessionResponse;
 
     fn handle(&mut self, msg: Connect, _: &mut Context<Self>) -> Self::Result {
         self.session_counter += 1;
@@ -27,28 +28,28 @@ impl Handler<Connect> for GameServer {
             id: self.session_counter,
             rooms: HashSet::new(),
         });
-        ConnectResponse {
+        ConnectSessionResponse {
             connected_id: self.session_counter
         }
     }
 }
 
 #[derive(Serialize)]
-#[serde(rename_all= "camelCase")]
-pub struct ConnectResponse {
+#[serde(rename_all = "camelCase")]
+pub struct ConnectSessionResponse {
     pub connected_id: usize,
 }
 
-impl ConnectResponse {
-    pub const MESSAGE_TYPE: &'static str = "connect";
+impl ConnectSessionResponse {
+    pub const _MESSAGE_TYPE: &'static str = "connect";
 }
 
-impl<A, M> MessageResponse<A, M> for ConnectResponse
+impl<A, M> MessageResponse<A, M> for ConnectSessionResponse
     where
         A: Actor,
-        M: Message<Result = ConnectResponse>,
+        M: Message<Result=ConnectSessionResponse>,
 {
-    fn handle<R: ResponseChannel<M>>(self, _: &mut A::Context, tx: Option<R>) {
+    fn handle<R: ResponseChannel<M>>(self, _ctx: &mut <A as Actor>::Context, tx: Option<R>) {
         if let Some(tx) = tx {
             tx.send(self);
         }
